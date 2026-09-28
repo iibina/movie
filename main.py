@@ -1,6 +1,8 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import requests
+from io import StringIO
 
 
 # ============================================================
@@ -9,8 +11,30 @@ import plotly.express as px
 
 @st.cache_data
 def load_data():
-    # main.py와 같은 폴더에 있는 CSV 파일 사용
-    df = pd.read_csv("kobis_movies.csv")
+
+    url = "https://raw.githubusercontent.com/greatsong/modudata/main/data/kobis_movies.csv"
+
+    try:
+        response = requests.get(
+            url,
+            timeout=30
+        )
+
+        response.raise_for_status()
+
+        df = pd.read_csv(
+            StringIO(response.text)
+        )
+
+    except Exception as e:
+        st.error("영화 데이터를 인터넷에서 불러오지 못했습니다.")
+        st.write("데이터 주소:", url)
+        st.write("오류 내용:", e)
+        st.stop()
+
+    # --------------------------------------------------------
+    # 데이터 정리
+    # --------------------------------------------------------
 
     # 개봉일을 날짜 형식으로 변환
     df["openDt"] = pd.to_datetime(
@@ -84,10 +108,15 @@ fig1.update_traces(
     )
 )
 
-st.plotly_chart(fig1, use_container_width=True)
+st.plotly_chart(
+    fig1,
+    use_container_width=True
+)
 
 st.write("**이 그래프로 알 수 있는 것**")
-st.write("어떤 장르의 영화가 많이 포함되어 있는지 알 수 있습니다.")
+st.write(
+    "어떤 장르의 영화가 많이 포함되어 있는지 알 수 있습니다."
+)
 
 
 # ============================================================
@@ -98,7 +127,10 @@ st.write("어떤 장르의 영화가 많이 포함되어 있는지 알 수 있�
 st.header("2. 장르별 영화 관객 수")
 
 treemap_df = (
-    df.groupby(["genre", "movieNm"], as_index=False)["total_audi"]
+    df.groupby(
+        ["genre", "movieNm"],
+        as_index=False
+    )["total_audi"]
     .sum()
 )
 
@@ -117,10 +149,15 @@ fig2.update_traces(
     )
 )
 
-st.plotly_chart(fig2, use_container_width=True)
+st.plotly_chart(
+    fig2,
+    use_container_width=True
+)
 
 st.write("**이 그래프로 알 수 있는 것**")
-st.write("각 장르에서 어떤 영화가 많은 관객을 모았는지 알 수 있습니다.")
+st.write(
+    "각 장르에서 어떤 영화가 많은 관객을 모았는지 알 수 있습니다."
+)
 
 
 # ============================================================
@@ -149,10 +186,13 @@ fig3.update_traces(
     )
 )
 
-st.plotly_chart(fig3, use_container_width=True)
+st.plotly_chart(
+    fig3,
+    use_container_width=True
+)
 
 
-# 가장 많은 영화가 포함된 관객 수 구간 계산
+# 가장 많은 영화가 포함된 관객 수 구간
 counts, bins = pd.cut(
     df["total_audi"],
     bins=20,
@@ -164,9 +204,21 @@ most_bin = counts.value_counts().idxmax()
 low = int(most_bin.left)
 high = int(most_bin.right)
 
-# 총 관객이 가장 많은 영화
-max_movie = df.loc[df["total_audi"].idxmax(), "movieNm"]
-max_audi = int(df["total_audi"].max())
+
+# 총 관객 수가 가장 많은 영화
+max_index = df["total_audi"].idxmax()
+
+max_movie = df.loc[
+    max_index,
+    "movieNm"
+]
+
+max_audi = int(
+    df.loc[
+        max_index,
+        "total_audi"
+    ]
+)
 
 st.write(
     f"가장 많은 영화가 포함된 관객 수 구간은 "
@@ -175,16 +227,19 @@ st.write(
 
 st.write(
     f"총 관객 수가 가장 많은 영화는 "
-    f"**{max_movie}**로, **{max_audi:,}명**입니다."
+    f"**{max_movie}**로, "
+    f"**{max_audi:,}명**입니다."
 )
 
 st.write("**이 그래프로 알 수 있는 것**")
-st.write("영화들의 총 관객 수가 어느 구간에 가장 많이 분포하는지 알 수 있습니다.")
+st.write(
+    "영화들의 총 관객 수가 어느 구간에 가장 많이 분포하는지 알 수 있습니다."
+)
 
 
 # ============================================================
 # 그래프 4
-# 개봉일 스크린 수 vs 총 관객 수 산점도
+# 개봉일 스크린 수 vs 총 관객 수
 # ============================================================
 
 st.header("4. 개봉일 스크린 수와 총 관객의 관계")
@@ -208,10 +263,16 @@ fig4 = px.scatter(
     title="개봉일 스크린 수와 총 관객의 관계"
 )
 
-st.plotly_chart(fig4, use_container_width=True)
+st.plotly_chart(
+    fig4,
+    use_container_width=True
+)
 
 st.write("**이 그래프로 알 수 있는 것**")
-st.write("개봉일에 많은 스크린을 확보한 영화가 총 관객 수와 어떤 관계가 있는지 살펴볼 수 있습니다.")
+st.write(
+    "개봉일에 많은 스크린을 확보한 영화가 "
+    "총 관객 수와 어떤 관계가 있는지 살펴볼 수 있습니다."
+)
 
 
 # ============================================================
@@ -250,19 +311,21 @@ fig5 = px.box(
     title="장르별 총 관객 수 분포 (10편 이상인 장르)"
 )
 
-st.plotly_chart(fig5, use_container_width=True)
+st.plotly_chart(
+    fig5,
+    use_container_width=True
+)
 
 st.write("**이 그래프로 알 수 있는 것**")
-st.write("장르별 총 관객 수의 분포와 유난히 관객이 많거나 적은 영화를 살펴볼 수 있습니다.")
+st.write(
+    "장르별 총 관객 수의 분포와 "
+    "유난히 관객이 많거나 적은 영화를 살펴볼 수 있습니다."
+)
 
 
 # ============================================================
 # 그래프 6
 # 버블 차트
-# x = 개봉일 스크린 수
-# y = 총 관객 수
-# 버블 크기 = 첫 주 관객 수
-# 색상 = 장르
 # ============================================================
 
 st.header("6. 개봉일 스크린 수와 관객 수 관계")
@@ -289,10 +352,16 @@ fig6 = px.scatter(
     title="개봉일 스크린 수 · 총 관객 · 첫 주 관객"
 )
 
-st.plotly_chart(fig6, use_container_width=True)
+st.plotly_chart(
+    fig6,
+    use_container_width=True
+)
 
 st.write("**이 그래프로 알 수 있는 것**")
-st.write("개봉일 스크린 수와 총 관객 수의 관계를 살펴보고, 첫 주 관객이 많은 영화도 함께 비교할 수 있습니다.")
+st.write(
+    "개봉일 스크린 수와 총 관객 수의 관계를 살펴보고, "
+    "첫 주 관객이 많은 영화도 함께 비교할 수 있습니다."
+)
 
 
 # ============================================================
@@ -304,9 +373,13 @@ st.write("개봉일 스크린 수와 총 관객 수의 관계를 살펴보고, �
 st.header("7. 제작 국가와 장르별 영화 분포")
 
 sunburst_df = (
-    df.groupby(["nation", "genre"])
+    df.groupby(
+        ["nation", "genre"]
+    )
     .size()
-    .reset_index(name="movie_count")
+    .reset_index(
+        name="movie_count"
+    )
 )
 
 fig7 = px.sunburst(
@@ -324,7 +397,13 @@ fig7.update_traces(
     )
 )
 
-st.plotly_chart(fig7, use_container_width=True)
+st.plotly_chart(
+    fig7,
+    use_container_width=True
+)
 
 st.write("**이 그래프로 알 수 있는 것**")
-st.write("어떤 나라의 영화가 많이 포함되어 있으며, 그 나라의 영화가 어떤 장르로 구성되어 있는지 알 수 있습니다.")
+st.write(
+    "어떤 나라의 영화가 많이 포함되어 있으며, "
+    "그 나라의 영화가 어떤 장르로 구성되어 있는지 알 수 있습니다."
+)
