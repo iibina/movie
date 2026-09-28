@@ -1,42 +1,49 @@
-import streamlit as st
-import pandas as pd
-import plotly.express as px
+# ----------------------------------
+# 그래프 8. 10위권 체류 기간과 총 관객의 관계
+# ----------------------------------
+st.subheader("⑧ 10위권에 오래 머문 영화는 총 관객도 많은가")
 
-st.set_page_config(page_title="영화 데이터 그래프 도감 2 - 분포와 관계", layout="wide")
-st.title("영화 데이터 그래프 도감 2 - 분포와 관계")
-
-DATA_URL = "https://raw.githubusercontent.com/greatsong/modudata/main/data/kobis_movies.csv"
-
-
-@st.cache_data
-def load_data():
-    # 1년간 박스오피스 10위권에 든 영화 216편의 요약표를 불러옵니다
-    df = pd.read_csv(DATA_URL)
-    # 장르가 세로막대 기호(|)로 여러 개 적힌 영화는 첫 번째 장르만 씁니다
-    df["장르"] = df["genre"].str.split("|").str[0]
-    return df
-
-
-df = load_data()
-
-# ── 그래프 1. 장르별 영화 편수 도넛 ──
-st.header("1. 장르별 영화 편수 (도넛)")
-genre_count = df["장르"].value_counts().reset_index()
-genre_count.columns = ["장르", "편수"]
-
-fig = px.pie(
-    genre_count,
-    names="장르",
-    values="편수",
-    hole=0.45,  # 가운데 구멍을 뚫어 도넛 모양으로
+fig8 = px.scatter(
+    df,
+    x="days_in_top10",
+    y="total_audi",
+    hover_name="movieNm",
+    hover_data={
+        "days_in_top10": True,
+        "total_audi": ":,"
+    },
+    labels={
+        "days_in_top10": "10위권에 머문 날수",
+        "total_audi": "총 관객 수"
+    },
+    title="10위권에 오래 머문 영화는 총 관객도 많은가"
 )
-# 조각에 마우스를 올리면 편수와 비율이 보이게 합니다
-fig.update_traces(hovertemplate="%{label}<br>%{value}편 (%{percent})<extra></extra>")
-st.plotly_chart(fig, width="stretch")
 
-# '이 그래프로 알 수 있는 것' 한 문장을 적는 자리
-st.text_input("이 그래프로 알 수 있는 것", key="note1")
+fig8.update_traces(
+    marker=dict(
+        size=10,
+        opacity=0.75
+    ),
+    hovertemplate=(
+        "<b>%{hovertext}</b><br>"
+        "10위권에 머문 날수: %{x}일<br>"
+        "총 관객: %{y:,}명"
+        "<extra></extra>"
+    )
+)
+
+fig8.update_layout(
+    xaxis_title="10위권에 머문 날수",
+    yaxis_title="총 관객 수",
+    margin=dict(t=40, l=20, r=20, b=20)
+)
+
+st.plotly_chart(fig8, use_container_width=True)
+
+# ----------------------------------
+# 그래프 아래 설명 자리
+# ----------------------------------
+st.markdown("**이 그래프로 알 수 있는 것**")
+st.info("여기에 이 그래프를 보고 알 수 있는 내용을 한 문장으로 작성합니다.")
 
 st.divider()
-# 앞으로 그래프를 계속 추가할 구역
-st.header("2. (다음 그래프를 여기에 추가)")
