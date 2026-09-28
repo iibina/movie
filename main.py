@@ -12,7 +12,7 @@ from io import StringIO
 @st.cache_data
 def load_data():
 
-    url = "https://raw.githubusercontent.com/greatsong/modudata/main/data/kobis_movies.csv"
+    url = "https://raw.githubusercontent.com/happykth/data/main/kobis_movies.csv"
 
     try:
         response = requests.get(
