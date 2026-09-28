@@ -1,44 +1,39 @@
 # ----------------------------------
-# 그래프 8. 10위권 체류 기간과 총 관객의 관계
+# 그래프 7. 제작 국가 → 장르 선버스트
 # ----------------------------------
-st.subheader("⑧ 10위권에 오래 머문 영화는 총 관객도 많은가")
+st.subheader("⑦ 제작 국가와 장르별 영화 분포")
 
-fig8 = px.scatter(
-    df,
-    x="days_in_top10",
-    y="total_audi",
-    hover_name="movieNm",
-    hover_data={
-        "days_in_top10": True,
-        "total_audi": ":,"
-    },
-    labels={
-        "days_in_top10": "10위권에 머문 날수",
-        "total_audi": "총 관객 수"
-    },
-    title="10위권에 오래 머문 영화는 총 관객도 많은가"
+# 제작 국가가 여러 개인 경우 첫 번째 국가만 사용
+sunburst_df = df.copy()
+sunburst_df["nation"] = (
+    sunburst_df["nation"]
+    .fillna("알 수 없음")
+    .astype(str)
+    .apply(lambda x: x.split("|")[0])
 )
 
-fig8.update_traces(
-    marker=dict(
-        size=10,
-        opacity=0.75
-    ),
+fig7 = px.sunburst(
+    sunburst_df,
+    path=["nation", "genre"],
+    values=None,
+    title="제작 국가 → 장르별 영화 편수"
+)
+
+# 영화 편수를 기준으로 칸 크기가 결정되도록 설정
+fig7.update_traces(
+    counts="value",
     hovertemplate=(
-        "<b>%{hovertext}</b><br>"
-        "10위권에 머문 날수: %{x}일<br>"
-        "총 관객: %{y:,}명"
+        "<b>%{label}</b><br>"
+        "영화 편수: %{value}편"
         "<extra></extra>"
     )
 )
 
-fig8.update_layout(
-    xaxis_title="10위권에 머문 날수",
-    yaxis_title="총 관객 수",
-    margin=dict(t=40, l=20, r=20, b=20)
+fig7.update_layout(
+    margin=dict(t=40, l=10, r=10, b=10)
 )
 
-st.plotly_chart(fig8, use_container_width=True)
+st.plotly_chart(fig7, use_container_width=True)
 
 # ----------------------------------
 # 그래프 아래 설명 자리
